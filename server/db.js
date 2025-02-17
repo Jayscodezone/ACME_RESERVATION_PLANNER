@@ -30,11 +30,13 @@ const createTables = async () => {
  customer_id UUID REFERENCES customers(id) NOT NULL
 );
 `;
-
-  await client.query(SQL);
-  console.log("Tables were created successfully");
+  try {
+    await client.query(SQL);
+    console.log("Tables were created successfully");
+  } catch (error) {
+    console.error("Error creating tables:", error);
+  }
 };
-
 // Create a new customer
 const createCustomer = async (customerName) => {
   const SQL = `
@@ -90,7 +92,7 @@ const createReservation = async ({
 const destroyReservation = async (id) => {
   await client.query(`DELETE FROM reservations WHERE id = $1;`, [id]);
 };
-// Initializing Databased and seeding 
+// Initializing Databased and seeding
 const init = async () => {
   await client.connect();
   await createTables();
@@ -103,12 +105,12 @@ const init = async () => {
     console.log(`Customer created: ${name}`);
   }
 
- for (const name of restaurantNames) {
+  for (const name of restaurantNames) {
     await createRestaurant(name);
     console.log(`Restaurant created: ${name}`);
-   }
- };
-// start the database 
+  }
+};
+// start the database
 init();
 module.exports = {
   client,
