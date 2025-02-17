@@ -1,49 +1,48 @@
 const express = require('express');
-const { fetchCustomers, fetchRestaurants, createReservation, destroyReservation }= require("./db");
+const db = require('./db');
 const app = express();
-const db = require("./db");
-app.use(express.json())
 
-// Initialization database and awaiting the create tables 
-const init = async ()=>{
-try{
-   await db.init();
-   await createTables();
-  console.log('Database Initialized');
-   
-  const PORT = 3000;
-  app.listen(PORT, () => {
-   console.log(`Server is running on http://localhost:${PORT}`);
-});
-} catch (err) {
-  console.error('Error initializing the database:', err);
-}
-};
-// Fetching customers 
+//middleware 
+app.use(express.json());
+
+
+// get customers from api 
    app.get('/api/customers', async (req, res, next) => {
     try {
-      res.json(await fetchCustomers());
+      const customers = await db.fetchCustomers();
+      res.json(customers);
     } catch (err) {
       next(err);
     }
   });
   
   
-  //Fetching the restaurants 
+  //get restaurants from api 
   app.get('/api/restaurants', async (req, res, next) => {
     try {
-      res.json(await fetchRestaurants());
+      const restaurants = await db.fetchRestaurants();
+    res.json(restaurants);
     } catch (err) {
       next(err);
     }
   });
-  
-  // Creating the reservation 
+  // get reservations from api .
+app.get('/api/reservations', async (req, res, next) => {
+  try {
+    // You can either create a helper function in db.js or run a query directly.
+    const result = await db.client.query('SELECT * FROM reservations;');
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
+  //  Creating the reservation 
   app.post('/api/customers/:id/reservations', async (req, res, next) => {
     try {
       const { id: customer_id } = req.params;
       const { restaurant_id, date, party_count } = req.body;
-      const reservation = await createReservation({ customer_id, restaurant_id, date, party_count });
+      const reservation = await db.createReservation({ customer_id, restaurant_id, date, party_count });
       res.status(201).json(reservation);
     } catch (err) {
       next(err);
@@ -54,7 +53,7 @@ try{
   // Deleting the reservation 
   app.delete('/api/customers/:customer_id/reservations/:id', async (req, res, next) => {
     try {
-      await destroyReservation(req.params.id);
+      await db. destroyReservation(req.params.id);
       res.sendStatus(204);
     } catch (err) {
       next(err);
@@ -63,9 +62,23 @@ try{
   
   // Error handling
   app.use((err, req, res, next) => {
+    console.error(err);
     res.status(500).json({ error: err.message });
   });
+  // initializing server
+  const init = async () => {
+    try {
+      await db.createTables();
+      console.log('Connected to the database');
+      
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Server listening on port ${PORT}`);
+      });
+    } catch (error) {
+      console.error('Failed to initialize server');
+    }
+  };
   
   
   init ();
-
