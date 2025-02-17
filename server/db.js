@@ -109,6 +109,23 @@ const init = async () => {
     await createRestaurant(name);
     console.log(`Restaurant created: ${name}`);
   }
+  for (const name of customerNames) {
+    const userID = await client.query(
+      `SELECT id FROM customers WHERE name = $1`,
+      [name]
+    );
+    for (const restaurant of restaurantNames){
+      const restaurantID = await client.query(
+        `SELECT id FROM restaurants WHERE name = $1`,
+        [restaurant]
+      );
+    const reservationNames = [{ customer_id: userID.rows[0].id, restaurant_id:restaurantID.rows[0].id, date:"2025-02-14",party_count:2}];
+    for ( const name of reservationNames){
+      const reservation = await client.query(`INSERT INTO reservations(id,customer_id,restaurant_id, date, party_count)
+        VALUES ($1,$2,$3,$4,$5)`, [uuid.v4(),name.customer_id,name.restaurant_id,name.date,name.party_count])
+    }
+    }
+  }
 };
 // start the database
 init();
